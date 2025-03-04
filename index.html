@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Willman Family Nature Preserve Data Collection</title>
+
+    <style>
+        /*Map Styling*/
+        html, body, #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+        /*Add Record Button Styling*/
+        .addRecordBtn {
+            position: absolute;
+            z-index: 10;
+            top: 10px;
+            right: 10px;
+            background-color: #0079c1;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .addRecordBtn:hover {
+            background-color: #005a87;
+        }
+
+        /*Basemap Toggle Button*/
+        .basemapToggleBtn {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 10;
+            background-color: #ffffff;
+            color: #333;
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .basemapToggleBtn:hover {
+            background-color: #f0f0f0;
+        }
+
+        /*Basemap Gallery*/
+        .basemapGalleryDiv {
+            display: none; 
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+    <!-- Import Esri ArcGIS API -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.26/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.26/"></script>
+
+</head>
+<body>
+
+    <!-- Survey123 Data Collection Button and survey link -->
+    <a href="https://arcg.is/Gyb880" target="_blank" class="addRecordBtn">
+        Add Record
+    </a>
+
+    <!-- Basemap Toggle Button -->
+    <button class="basemapToggleBtn" id="toggleBasemap">Basemaps</button>
+
+    <!-- Basemap Gallery-->
+    <div class="basemapGalleryDiv" id="basemapGalleryDiv"></div>
+
+    <div id="viewDiv"></div>
+
+    <script>
+        require([
+            "esri/config", 
+            "esri/Map", 
+            "esri/views/MapView", 
+            "esri/widgets/Locate", 
+            "esri/layers/FeatureLayer", 
+            "esri/layers/support/LabelClass",
+            "esri/widgets/BasemapGallery",
+            "esri/geometry/Extent"
+        ], 
+        (Config, Map, MapView, Locate, FeatureLayer, LabelClass, BasemapGallery, Extent) => {
+
+            //Set API Key
+            Config.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurNNKOxZzGksmd9odtipfMrCKhlUL7auZpitHz5p7XawaMdGKgRj-ybuRoJSAruPYpDWR-xjlL7q9anX9RZTFi6okxC69vm5audoPUqPT0sW7pjDTbgRcCVVAXRgKb9D5H5zaPA-oqQHbW2uiKh62goj2P4dQaxFDXvd9fQndw_bQlfySRneTGOnFPmVwB9_RvZ5JnpllUQuKIwpIQdpgELv53GTcQB4NvHv5Kl6GAd44AT1_iYlozOde";
+
+            //Define Map
+            const map = new Map({
+                basemap: "topo-vector"
+            });
+
+            //Define Restricted Extent (Grafton Property Bounds)
+            const restrictedExtent = new Extent({
+                xmin: -87.956, ymin: 43.302, // Southwest corner
+                xmax: -87.951, ymax: 43.305, // Northeast corner
+                spatialReference: { wkid: 4326 }
+            });
+
+            //Create Map View with Zoom & Pan Limits
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                zoom: 19,
+                center: [-87.953724, 43.3036],
+                constraints: {
+                    rotationEnabled: false,
+                    minZoom: 18,
+                    maxZoom: 22,
+                    geometry: restrictedExtent //Restrict panning & zooming to this area
+                }
+            });
+
+            //Add Locate Widget
+            const locateBtn = new Locate({
+                view: view
+            });
+
+            view.ui.add(locateBtn, {
+                position: "top-left"
+            });
+
+            //Define Unique Value Renderer for Trails
+            const trailsRenderer = {
+                type: "unique-value", 
+                field: "name1",
+                uniqueValueInfos: [
+                    { value: "Quarry Loop", symbol: { type: "simple-line", color: [255, 0, 0], width: 2 } },  // Red
+                    { value: "Ledges Trail", symbol: { type: "simple-line", color: [0, 255, 0], width: 2 } },  // Green
+                    { value: "Tall Pines Trail", symbol: { type: "simple-line", color: [0, 0, 255], width: 2 } },  // Blue
+                ],
+                defaultSymbol: { type: "simple-line", color: [200, 200, 200], width: 1 }
+            };
+
+            //Define Labeling for Trails
+            const trailsLabeling = new LabelClass({
+                symbol: {
+                    type: "text",
+                    color: "black",
+                    haloColor: "white",
+                    haloSize: "2px",
+                    font: {
+                        size: 12,
+                        weight: "bold"
+                    }
+                },
+                labelPlacement: "center-along",
+                labelExpressionInfo: { expression: "$feature.name1" }
+            });
+
+            //Add Trails Layer
+            const trailsLayer = new FeatureLayer({ 
+                url: "https://services.arcgis.com/HRPe58bUyBqyyiCt/arcgis/rest/services/WFNP_Trails/FeatureServer",
+                renderer: trailsRenderer,
+                labelingInfo: [trailsLabeling]
+            });
+
+            map.add(trailsLayer);
+
+            //Add Survey123 Feature Layer
+            const surveyLayer = new FeatureLayer({ 
+                url: "https://services.arcgis.com/HRPe58bUyBqyyiCt/arcgis/rest/services/survey123_179e4233056c42558fb4ad804302448b_results/FeatureServer"
+            });
+
+            map.add(surveyLayer);
+
+           //Basemap Gallery Widget
+const basemapGallery = new BasemapGallery({
+    view: view,
+    container: document.createElement("div") 
+});
+
+//Get the Basemap Gallery Div & Button
+const basemapToggleBtn = document.getElementById("toggleBasemap");
+const basemapGalleryDiv = document.getElementById("basemapGalleryDiv");
+
+//Apply Styling for Small Basemap Menu
+basemapGalleryDiv.style.position = "absolute";
+basemapGalleryDiv.style.bottom = "60px";
+basemapGalleryDiv.style.left = "10px";
+basemapGalleryDiv.style.width = "220px";  // Keeps it small
+basemapGalleryDiv.style.maxHeight = "300px";  // Limits height
+basemapGalleryDiv.style.overflowY = "auto";  // Scroll if too many basemaps
+basemapGalleryDiv.style.backgroundColor = "rgba(255, 255, 255, 0.95)";
+basemapGalleryDiv.style.padding = "8px";
+basemapGalleryDiv.style.borderRadius = "4px";
+basemapGalleryDiv.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.3)";
+basemapGalleryDiv.style.display = "none"; // Start hidden
+
+//Append Basemap Gallery to the Div
+basemapGalleryDiv.appendChild(basemapGallery.domNode);
+
+//Toggle Basemap Gallery Visibility
+basemapToggleBtn.addEventListener("click", function () {
+    if (basemapGalleryDiv.style.display === "none") {
+        basemapGalleryDiv.style.display = "block"; // Show menu
+    } else {
+        basemapGalleryDiv.style.display = "none"; // Hide menu
+    }
+});
+
+
+        });
+    </script>
+</body>
+</html>
