@@ -76,7 +76,7 @@
 <body>
 
     <!-- Survey123 Data Collection Button and survey link -->
-    <a href="https://arcg.is/Gyb880" target="_blank" class="addRecordBtn">
+    <a href="https://survey123.arcgis.com/share/179e4233056c42558fb4ad804302448b" target="_blank" class="addRecordBtn">
         Add Record
     </a>
 
@@ -176,12 +176,73 @@
 
             map.add(trailsLayer);
 
-            //Add Survey123 Feature Layer
             const surveyLayer = new FeatureLayer({ 
-                url: "https://services.arcgis.com/HRPe58bUyBqyyiCt/arcgis/rest/services/survey123_179e4233056c42558fb4ad804302448b_results/FeatureServer"
-            });
+    url: "https://services.arcgis.com/HRPe58bUyBqyyiCt/arcgis/rest/services/survey123_179e4233056c42558fb4ad804302448b_results/FeatureServer",
+    
+    outFields: ["*"], //Ensures all fields are retrievable
+    popupEnabled: true, //Enables ArcGIS Online popups
 
-            map.add(surveyLayer);
+    //Apply Unique Value Renderer for Symbol Styling
+    renderer: {
+        type: "unique-value",
+        field: "Observation Type", //Uses this field to determine color
+        uniqueValueInfos: [
+            { 
+                value: "Mammal", 
+                symbol: {
+                    type: "simple-marker", 
+                    color: [0, 0, 255], // Blue
+                    size: 8,
+                    outline: { color: [0, 0, 0], width: 1 }
+                }
+            },
+            { 
+                value: "Bird", 
+                symbol: {
+                    type: "simple-marker", 
+                    color: [255, 0, 0], // Red
+                    size: 8,
+                    outline: { color: [0, 0, 0], width: 1 }
+                }
+            },
+            { 
+                value: "Plant", 
+                symbol: {
+                    type: "simple-marker", 
+                    color: [0, 255, 0], // Green
+                    size: 8,
+                    outline: { color: [0, 0, 0], width: 1 }
+                }
+            },
+            { 
+                value: "Other", 
+                symbol: {
+                    type: "simple-marker", 
+                    color: [128, 128, 128], // Gray
+                    size: 8,
+                    outline: { color: [0, 0, 0], width: 1 }
+                }
+            }
+        ],
+        defaultSymbol: {
+            type: "simple-marker", 
+            color: [200, 200, 200], //Light gray for anything else
+            size: 8,
+            outline: { color: [0, 0, 0], width: 1 }
+        }
+    }
+});
+
+//Ensure Popups Load Properly
+surveyLayer.load().then(() => {
+    if (!surveyLayer.popupTemplate) {
+        surveyLayer.popupTemplate = surveyLayer.createPopupTemplate(); //Uses ArcGIS Online's default popup
+    }
+});
+
+map.add(surveyLayer);
+
+
 
            //Basemap Gallery Widget
 const basemapGallery = new BasemapGallery({
