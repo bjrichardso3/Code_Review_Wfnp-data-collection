@@ -109,6 +109,8 @@
                 basemap: "topo-vector"
             });
 
+            //Perhaps imagery hybrid could be a good default basemap, showing the vegetation coverage of the nature preserve, while retaining labels. -BR
+
             //Define Restricted Extent (Grafton Property Bounds)
             const restrictedExtent = new Extent({
                 xmin: -87.956, ymin: 43.302, // Southwest corner
@@ -129,7 +131,9 @@
                     geometry: restrictedExtent //Restrict panning & zooming to this area
                 }
             });
-
+            
+                //The restrict zoom makes sense for this application focusing on this particular nature preserve. I also like the current location button for navigation within the preserve. However it could be beneficial to have a little more context as to where the area is, if you are not currently at the location and are using the map for viewing. It could also be expanded to other areas, which would mean altering the zoom and extent restrictions -BR
+            
             //Add Locate Widget
             const locateBtn = new Locate({
                 view: view
@@ -166,6 +170,8 @@
                 labelPlacement: "center-along",
                 labelExpressionInfo: { expression: "$feature.name1" }
             });
+
+            //I really like the labeling of the trails. -BR
 
             //Add Trails Layer
             const trailsLayer = new FeatureLayer({ 
@@ -233,12 +239,17 @@
     }
 });
 
+// I like the contents of the survey, including the ability to upload pictures. Could add species as a question/ field of the survey (it could certainly be entered into notes, but having a field of its own could be beneficial for data analysis in the future). The notes field could include other relevant information -BR
+// The symbology could employ icons of some of the most common species that are found, connected to the species field mentioned above. This symbology could retain colors associated with species type (mammals, birds, etc.) but provide additional quick visualization. This could be used to visually identify patterns. -BR
+
 //Ensure Popups Load Properly
 surveyLayer.load().then(() => {
     if (!surveyLayer.popupTemplate) {
         surveyLayer.popupTemplate = surveyLayer.createPopupTemplate(); //Uses ArcGIS Online's default popup
     }
 });
+
+// I like that the photo is included in the pop up -BR
 
 map.add(surveyLayer);
 
@@ -279,7 +290,9 @@ basemapToggleBtn.addEventListener("click", function () {
     }
 });
 
-
+//This customized basemap gallery code showcases good command of the material/ features. -BR
+//Overall, very good project! User friendly application that provides value in tracking species observations. -BR
+            
         });
     </script>
 </body>
